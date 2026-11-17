@@ -37,8 +37,11 @@ class Shop(models.Model):
 
 class User(AbstractUser):
     email = models.EmailField(unique=True)
-    type = models.CharField(verbose_name="Тип пользователя", choices=USER_TYPE_CHOICES, max_length=20)
+    type = models.CharField(verbose_name="Тип пользователя", choices=USER_TYPE_CHOICES, max_length=20, default='buyer')
     shop = models.ForeignKey(Shop, verbose_name='Магазин', related_name='users', null=True, blank=True, on_delete=models.SET_NULL)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
 
     class Meta:
         verbose_name = "Пользователь"
@@ -46,7 +49,7 @@ class User(AbstractUser):
         ordering = ('email',)
 
     def __str__(self):
-        return self.username
+        return self.email
 
 class Category(models.Model):
     shops = models.ManyToManyField(Shop, verbose_name="Магазины", related_name='categories')
