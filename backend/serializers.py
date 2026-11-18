@@ -43,3 +43,11 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['user', 'dt', 'status']
+
+class ContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = [
+            'id', 'last_name', 'first_name', 'middle_name', 'email',
+            'phone', 'address', 'city', 'street', 'house', 'building', 'structure', 'apartment',
+        ]

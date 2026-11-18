@@ -16,12 +16,6 @@ USER_TYPE_CHOICES = (
     ('buyer', 'Покупатель'),
 )
 
-CONTACT_TYPE_CHOICES = (
-    ('phone', 'Телефон'),
-    ('address', 'Адрес'),
-    ('email', 'Email'),
-)
-
 class Shop(models.Model):
     name = models.CharField(verbose_name="Название", max_length=100, unique=True)
     url = models.URLField(verbose_name="Ссылка")
@@ -115,14 +109,26 @@ class ProductParameter(models.Model):
         ]
 
 class Contact(models.Model):
-    type = models.CharField(verbose_name="Тип контакта", choices=CONTACT_TYPE_CHOICES, max_length=20)
     user = models.ForeignKey(User, verbose_name="Пользователь", related_name='contacts', on_delete=models.CASCADE)
-    value = models.CharField(verbose_name="Значение", max_length=255)
+    first_name = models.CharField(verbose_name="Имя", max_length=100)
+    last_name = models.CharField(verbose_name="Фамилия", max_length=100)
+    middle_name = models.CharField(verbose_name="Отчество", max_length=100, blank=True, default='')
+    email = models.EmailField(verbose_name="Email")
+    phone = models.CharField(verbose_name="Телефон", max_length=20)
+    address = models.CharField(verbose_name="Адрес", max_length=255, blank=True, default='')
+    city = models.CharField(verbose_name="Город", max_length=100, blank=True, default='')
+    street = models.CharField(verbose_name="Улица", max_length=100, blank=True, default='')
+    house = models.CharField(verbose_name="Дом", max_length=20, blank=True, default='')
+    building = models.CharField(verbose_name="Корпус", max_length=20, blank=True, default='')
+    structure = models.CharField(verbose_name="Строение", max_length=20, blank=True, default='')
+    apartment = models.CharField(verbose_name="Квартира", max_length=20, blank=True, default='')
 
     class Meta:
         verbose_name = "Контакт"
         verbose_name_plural = "Список контактов"
-        constraints = [models.UniqueConstraint(fields=["user", "type", "value"], name="unique_user_contact")]
+
+    def __str__(self):
+        return f"{self.last_name} {self.first_name} ({self.phone})"
 
 class Order(models.Model):
     user = models.ForeignKey(User, verbose_name="Пользователь", related_name='orders', on_delete=models.CASCADE)

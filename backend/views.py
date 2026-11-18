@@ -1,10 +1,11 @@
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import viewsets, status
 from backend.models import *
 from backend.serializers import ShopSerializer, ObtainTokenPairSerializer, RegistrationSerializer, \
-    ProductInfoSerializer, OrderSerializer
+    ProductInfoSerializer, OrderSerializer, ContactSerializer
 
 
 class RegistrationView(APIView):
@@ -33,3 +34,14 @@ class ProductInfoViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+
+class ContactViewSet(viewsets.ModelViewSet):
+    queryset = Contact.objects.all()
+    serializer_class = ContactSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Contact.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
