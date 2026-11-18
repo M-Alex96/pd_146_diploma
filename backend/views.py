@@ -3,7 +3,8 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import viewsets, status
 from backend.models import *
-from backend.serializers import ShopSerializer, ObtainTokenPairSerializer, RegistrationSerializer
+from backend.serializers import ShopSerializer, ObtainTokenPairSerializer, RegistrationSerializer, ProductInfoSerializer
+
 
 class RegistrationView(APIView):
     def post(self, request):
@@ -23,3 +24,7 @@ class ObtainTokenPairView(TokenObtainPairView):
 class ShopViewSet(viewsets.ModelViewSet):
     queryset = Shop.objects.all()
     serializer_class = ShopSerializer
+
+class ProductInfoViewSet(viewsets.ModelViewSet):
+    queryset = ProductInfo.objects.all()
+    serializer_class = ProductInfoSerializer

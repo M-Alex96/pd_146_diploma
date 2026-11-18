@@ -85,7 +85,7 @@ class ProductInfo(models.Model):
 
     class Meta:
         verbose_name = "Информация о продукте"
-        verbose_name_plural = "Информационный список о продуктах"
+        verbose_name_plural = "Список с информацией о продуктах"
         constraints = [models.UniqueConstraint(fields=["product", "shop"], name="unique_product_shop")]
 
     def __str__(self):
