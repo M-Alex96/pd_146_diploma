@@ -38,3 +38,8 @@ class ProductInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductInfo
         fields = ['product', 'shop', 'quantity', 'price', 'price_rrc']
+
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['user', 'dt', 'status']
