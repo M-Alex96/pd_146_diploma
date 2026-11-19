@@ -1,4 +1,5 @@
 import django_filters
+from django.db.models import Q
 from backend.models import ProductInfo
 
 class ProductInfoFilter(django_filters.FilterSet):
@@ -12,7 +13,5 @@ class ProductInfoFilter(django_filters.FilterSet):
 
     def filter_search(self, qs, name, value):
         return qs.filter(
-            product__name__icontains=value
-        ) | qs.filter(
-            product__model__icontains=value
+            Q(product__name__icontains=value) | Q(product__model__icontains=value)
         )

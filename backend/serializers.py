@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from backend.models import *
@@ -6,7 +7,7 @@ from backend.models import *
 User = get_user_model()
 
 class RegistrationSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=8)
+    password = serializers.CharField(write_only=True, min_length=8, validators=[validate_password])
 
     class Meta:
         model = User
@@ -43,7 +44,7 @@ class ProductParameterSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['id', 'name', 'model']
+        fields = ['id', 'name', 'model', 'description']
 
 class ShopSerializer(serializers.ModelSerializer):
     class Meta:
