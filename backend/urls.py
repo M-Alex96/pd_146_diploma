@@ -1,5 +1,9 @@
 from rest_framework.routers import DefaultRouter
-from backend.views import ShopViewSet, ProductInfoViewSet, OrderViewSet, ContactViewSet
+from django.urls import path
+from rest_framework_simplejwt.views import TokenRefreshView
+
+from backend.views import ShopViewSet, ProductInfoViewSet, OrderViewSet, ContactViewSet, ObtainTokenPairView, \
+    RegistrationView
 
 router = DefaultRouter()
 router.register('shops', ShopViewSet)
@@ -7,4 +11,8 @@ router.register('products', ProductInfoViewSet)
 router.register('orders', OrderViewSet)
 router.register('contacts', ContactViewSet)
 
-urlpatterns = router.urls
+urlpatterns = [
+    path('login/', ObtainTokenPairView.as_view(), name='login'),
+    path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('registration/', RegistrationView.as_view(), name='registration'),
+] + router.urls
