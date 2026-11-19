@@ -29,20 +29,63 @@ class RegistrationSerializer(serializers.ModelSerializer):
 class ObtainTokenPairSerializer(TokenObtainPairSerializer):
     username_field = 'email'
 
+class ParameterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Parameter
+        fields = ['name']
+
+class ProductParameterSerializer(serializers.ModelSerializer):
+    parameter = ParameterSerializer(read_only=True)
+    class Meta:
+        model = ProductParameter
+        fields = ['parameter', 'value']
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'model']
+
 class ShopSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shop
         fields = ['id', 'name', 'url', 'state']
 
 class ProductInfoSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+    shop = ShopSerializer(read_only=True)
+    product_parameters = ProductParameterSerializer(many=True, read_only=True)
+
     class Meta:
         model = ProductInfo
-        fields = ['product', 'shop', 'quantity', 'price', 'price_rrc']
+        fields = ['id', 'product', 'shop', 'quantity', 'price', 'price_rrc', 'product_parameters']
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product_info = ProductInfoSerializer(read_only=True)
+    product_info_id = serializers.PrimaryKeyRelatedField(
+        queryset=ProductInfo.objects.all(),
+        source='product_info',
+        write_only=True
+    )
+    sum = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'product_info', 'product_info_id', 'quantity', 'sum']
+
+    def get_sum(self, obj):
+        return obj.quantity * obj.product_info.price
 
 class OrderSerializer(serializers.ModelSerializer):
+    order_items = OrderItemSerializer(many=True, read_only=True)
+    total_sum = serializers.SerializerMethodField()
+    contact = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = Order
-        fields = ['user', 'dt', 'status']
+        fields = ['id', 'dt', 'status', 'order_items', 'total_sum', 'contact']
+
+    def get_total_sum(self, obj):
+        return obj.total_sum
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:

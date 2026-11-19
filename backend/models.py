@@ -40,7 +40,7 @@ class User(AbstractUser):
     class Meta:
         verbose_name = "Пользователь"
         verbose_name_plural = "Список пользователей"
-        ordering = ('email',)
+        ordering = ("email",)
 
     def __str__(self):
         return self.email
@@ -135,6 +135,10 @@ class Order(models.Model):
     dt = models.DateTimeField(auto_now_add=True)
     status = models.CharField(verbose_name="Статус", choices=STATE_CHOICES, max_length=20, default='basket')
     contact = models.ForeignKey(Contact, verbose_name="Контакт", related_name="orders", null=True, blank=True, on_delete=models.SET_NULL)
+
+    @property
+    def total_sum(self):
+        return sum(item.quantity * item.product_info.price for item in self.order_items.all())
 
     class Meta:
         verbose_name = "Заказ"
