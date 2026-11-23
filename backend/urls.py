@@ -3,7 +3,7 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from backend.views import ShopViewSet, ProductInfoViewSet, OrderViewSet, ContactViewSet, ObtainTokenPairView, \
-    RegistrationView
+    RegistrationView, PartnerUpdate
 
 router = DefaultRouter()
 router.register('shops', ShopViewSet)
@@ -15,4 +15,5 @@ urlpatterns = [
     path('login/', ObtainTokenPairView.as_view(), name='login'),
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('registration/', RegistrationView.as_view(), name='registration'),
+    path('partner/update', PartnerUpdate.as_view(), name='partner-update')
 ] + router.urls

@@ -4,11 +4,86 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import viewsets, status
-
+from django.core.validators import URLValidator
+from django.core.exceptions import ValidationError
+import requests
+import yaml
 from backend.filters import ProductInfoFilter
 from backend.models import *
 from backend.serializers import ShopSerializer, ObtainTokenPairSerializer, RegistrationSerializer, \
     ProductInfoSerializer, OrderSerializer, ContactSerializer
+
+
+class PartnerUpdate(APIView):
+    """
+    Класс для обновления прайса от поставщика
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.type != 'shop':
+            return Response({'Status': False, 'Error': 'Только для магазинов'}, status=403)
+
+        url = request.data.get('url')
+        if not url:
+            return Response({'Status': False, 'Error': 'Не указан url'}, status=400)
+
+        try:
+            URLValidator()(url)
+        except ValidationError:
+            return Response({'Status': False, 'Error': 'Некорректный url'}, status=400)
+
+        try:
+            response = requests.get(url)
+            data = yaml.safe_load(response.content)
+        except Exception as e:
+            return Response({'Status': False, 'Error': f'Ошибка загрузки файла: {e}'}, status=400)
+
+        shop, _ = Shop.objects.get_or_create(
+            name=data['shop'],
+            defaults={'url': url, 'state': True}
+        )
+
+        if not request.user.shop:
+            request.user.shop = shop
+            request.user.save()
+
+        ProductInfo.objects.filter(shop=shop).delete()
+
+        for cat in data.get('categories', []):
+            category, _ = Category.objects.get_or_create(
+                id=cat['id'],
+                defaults={'name': cat['name']}
+            )
+            category.shops.add(shop)
+
+        for good in data.get('goods', []):
+            product, _ = Product.objects.get_or_create(
+                name=good['name'],
+                defaults={
+                    'category_id': good['category'],
+                    'model': good.get('model', ''),
+                    'description': ''
+                }
+            )
+
+            product_info = ProductInfo.objects.create(
+                product=product,
+                shop=shop,
+                quantity=good['quantity'],
+                price=good['price'],
+                price_rrc=good['price_rrc']
+            )
+
+            for name, value in good.get('parameters', {}).items():
+                parameter, _ = Parameter.objects.get_or_create(name=name)
+                ProductParameter.objects.create(
+                    product_info=product_info,
+                    parameter=parameter,
+                    value=str(value)
+                )
+
+        return Response({'Status': True, 'Message': 'Прайс успешно загружен'})
 
 
 class RegistrationView(APIView):
