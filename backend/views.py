@@ -1,3 +1,6 @@
+from django.core.mail import send_mail
+from django.db import transaction
+from django.conf import settings
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
@@ -190,6 +193,75 @@ class OrderViewSet(viewsets.ModelViewSet):
         if deleted:
             return Response({'Status': True, 'message': 'Товар удалён из корзины'})
         return Response({'error': 'Товар не найден'}, status=404)
+
+    @action(detail=False, methods=['post'])
+    def confirm_order(self, request):
+        contact_id = request.data.get('contact_id')
+        if not contact_id:
+            return Response({'error': 'Необходим contact_id'}, status=400)
+        try:
+            basket = Order.objects.get(user=request.user, status='basket')
+        except Order.DoesNotExist:
+            return Response({'error': 'Корзина пуста'}, status=400)
+        if not basket.order_items.exists():
+            return Response({'error': 'Корзина пуста'}, status=400)
+        try:
+            contact = Contact.objects.get(id=contact_id, user=request.user)
+        except Contact.DoesNotExist:
+            return Response({'error': 'Контакт не найден'}, status=400)
+        try:
+            with transaction.atomic():
+                basket.contact = contact
+                basket.status = 'new'
+                basket.save()
+
+                for item in basket.order_items.all():
+                    product_info = item.product_info
+                    if product_info.quantity < item.quantity:
+                        raise ValueError(f'Недостаточное количество товара: {product_info.product.name}')
+                    product_info.quantity -= item.quantity
+                    product_info.save()
+
+                subject_client = f'Заказ №{basket.id} подтверждён'
+                message_client = (
+                    f'Заказ №{basket.id} успешно оформлен.\n'
+                    f'Сумма заказа: {basket.total_sum} руб.\n'
+                    f'Статус: Новый заказ\n\n'
+                )
+                send_mail(
+                    subject_client,
+                    message_client,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [request.user.email],
+                    fail_silently=False,
+                )
+
+                subject_admin = f'Новый заказ №{basket.id}'
+                message_admin = (
+                    f'Оформлен новый заказ №{basket.id}\n'
+                    f'Покупатель: {request.user.email}\n'
+                    f'Сумма: {basket.total_sum} руб.\n'
+                    f'Контакт: {contact.last_name} {contact.first_name}, тел. {contact.phone}'
+                )
+                send_mail(
+                    subject_admin,
+                    message_admin,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [settings.ADMIN_EMAIL],
+                    fail_silently=False,
+                )
+
+        except ValueError as e:
+            return Response({'Status': False, 'Error': str(e)}, status=400)
+        except Exception as e:
+            return Response({'Status': False, 'Error': f'Ошибка при подтверждении: {e}'}, status=500)
+
+        return Response({
+            'Status': True,
+            'Message': 'Заказ успешно подтверждён',
+            'order_id': basket.id
+        })
+
 
 
 class ContactViewSet(viewsets.ModelViewSet):
