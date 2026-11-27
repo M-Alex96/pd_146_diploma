@@ -8,7 +8,7 @@ from backend.views import ShopViewSet, ProductInfoViewSet, OrderViewSet, Contact
 router = DefaultRouter()
 router.register('shops', ShopViewSet)
 router.register('products', ProductInfoViewSet)
-router.register('orders', OrderViewSet)
+router.register('orders', OrderViewSet, basename='orders')
 router.register('contacts', ContactViewSet)
 
 urlpatterns = [
